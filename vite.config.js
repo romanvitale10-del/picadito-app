@@ -4,7 +4,6 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: '/picadito-app/',
   plugins: [
     react(),
     VitePWA({
@@ -18,8 +17,8 @@ export default defineConfig({
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait',
-        scope: '/picadito-app/',
-        start_url: '/picadito-app/',
+        scope: '/',
+        start_url: '/',
         icons: [
           {
             src: 'pwa-192x192.png',
@@ -64,7 +63,3 @@ export default defineConfig({
     port: 3000
   }
 })
-
-
-
-// Force rebuild

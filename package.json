@@ -3,6 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "homepage": "https://romanvitale10-del.github.io/picadito-app",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
