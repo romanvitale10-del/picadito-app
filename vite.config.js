@@ -19,7 +19,7 @@ export default defineConfig({
         display: 'standalone',
         orientation: 'portrait',
         scope: '/picadito-app/',
-start_url: '/picadito-app/',
+        start_url: '/picadito-app/',
         icons: [
           {
             src: 'pwa-192x192.png',
@@ -64,5 +64,6 @@ start_url: '/picadito-app/',
     port: 3000
   }
 })
+
 
 
