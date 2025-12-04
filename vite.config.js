@@ -18,8 +18,8 @@ export default defineConfig({
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait',
-        scope: '/',
-        start_url: '/',
+        scope: '/picadito-app/',
+start_url: '/picadito-app/',
         icons: [
           {
             src: 'pwa-192x192.png',
@@ -64,4 +64,5 @@ export default defineConfig({
     port: 3000
   }
 })
+
 
