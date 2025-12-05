@@ -19,19 +19,13 @@ export default function InstallButton() {
       return;
     }
 
-    // Verificar si ya fue rechazada/instalada anteriormente
+    // Verificar si ya fue instalada anteriormente (no descartada, solo instalada)
     const wasInstalled = localStorage.getItem('pwa-installed');
-    const wasDismissed = localStorage.getItem('pwa-dismissed');
     
-    console.log('📦 LocalStorage check:', { wasInstalled, wasDismissed });
+    console.log('📦 LocalStorage check:', { wasInstalled });
     
     if (wasInstalled) {
       setDebugInfo('Instalada previamente');
-      return;
-    }
-    
-    if (wasDismissed) {
-      setDebugInfo('Descartada previamente');
       return;
     }
 
@@ -44,7 +38,7 @@ export default function InstallButton() {
       e.preventDefault();
       // Guardar el evento para usarlo después
       setDeferredPrompt(e);
-      // Mostrar el botón
+      // Mostrar el botón siempre
       setShowButton(true);
       setDebugInfo('Evento recibido!');
     };
@@ -108,9 +102,9 @@ export default function InstallButton() {
   };
 
   const handleDismiss = () => {
-    console.log('🚫 Botón descartado');
+    console.log('🚫 Botón descartado temporalmente');
     setShowButton(false);
-    localStorage.setItem('pwa-dismissed', 'true');
+    // No guardar en localStorage para que vuelva a aparecer en la próxima sesión
   };
 
   // Mostrar info de debug en desarrollo
