@@ -6,6 +6,15 @@ import { ThemeProvider } from './contexts/ThemeContext.jsx'
 import { AuthProvider } from './contexts/AuthContext.jsx'
 import './styles/index.css'
 
+// Capturar el evento de instalación ANTES de que Chrome lo capture
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  console.log('🎉 beforeinstallprompt capturado en main.jsx');
+  e.preventDefault();
+  deferredPrompt = e;
+  window.deferredPrompt = e; // Guardarlo globalmente
+});
+
 // Registrar Service Worker para PWA
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

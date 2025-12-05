@@ -19,7 +19,7 @@ export default function InstallButton() {
       return;
     }
 
-    // Verificar si ya fue instalada anteriormente (no descartada, solo instalada)
+    // Verificar si ya fue instalada anteriormente
     const wasInstalled = localStorage.getItem('pwa-installed');
     
     console.log('📦 LocalStorage check:', { wasInstalled });
@@ -29,16 +29,22 @@ export default function InstallButton() {
       return;
     }
 
-    setDebugInfo('Esperando evento...');
+    // Verificar si ya existe el prompt global capturado en main.jsx
+    if (window.deferredPrompt) {
+      console.log('✅ Prompt encontrado en window.deferredPrompt');
+      setDeferredPrompt(window.deferredPrompt);
+      setShowButton(true);
+      setDebugInfo('Prompt disponible!');
+    } else {
+      setDebugInfo('Esperando evento...');
+    }
 
     // Escuchar el evento beforeinstallprompt
     const handleBeforeInstallPrompt = (e) => {
-      console.log('🎉 beforeinstallprompt event received!');
-      // Prevenir que el navegador muestre su propio prompt
+      console.log('🎉 beforeinstallprompt event received in component!');
       e.preventDefault();
-      // Guardar el evento para usarlo después
       setDeferredPrompt(e);
-      // Mostrar el botón siempre
+      window.deferredPrompt = e;
       setShowButton(true);
       setDebugInfo('Evento recibido!');
     };
