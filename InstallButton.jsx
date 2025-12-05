@@ -5,11 +5,17 @@ export default function InstallButton() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showButton, setShowButton] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [debugInfo, setDebugInfo] = useState('');
 
   useEffect(() => {
+    // Debug: verificar estado inicial
+    console.log('🔍 InstallButton: Componente montado');
+    
     // Verificar si ya está instalada
     if (window.matchMedia('(display-mode: standalone)').matches) {
+      console.log('✅ App ya instalada (standalone mode)');
       setIsInstalled(true);
+      setDebugInfo('Ya instalada');
       return;
     }
 
@@ -17,30 +23,56 @@ export default function InstallButton() {
     const wasInstalled = localStorage.getItem('pwa-installed');
     const wasDismissed = localStorage.getItem('pwa-dismissed');
     
-    if (wasInstalled || wasDismissed) {
+    console.log('📦 LocalStorage check:', { wasInstalled, wasDismissed });
+    
+    if (wasInstalled) {
+      setDebugInfo('Instalada previamente');
+      return;
+    }
+    
+    if (wasDismissed) {
+      setDebugInfo('Descartada previamente');
       return;
     }
 
+    setDebugInfo('Esperando evento...');
+
     // Escuchar el evento beforeinstallprompt
     const handleBeforeInstallPrompt = (e) => {
+      console.log('🎉 beforeinstallprompt event received!');
       // Prevenir que el navegador muestre su propio prompt
       e.preventDefault();
       // Guardar el evento para usarlo después
       setDeferredPrompt(e);
       // Mostrar el botón
       setShowButton(true);
+      setDebugInfo('Evento recibido!');
     };
 
     // Escuchar cuando la app fue instalada
     const handleAppInstalled = () => {
+      console.log('✅ App instalada!');
       setShowButton(false);
       setIsInstalled(true);
       localStorage.setItem('pwa-installed', 'true');
       setDeferredPrompt(null);
+      setDebugInfo('Instalada!');
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('appinstalled', handleAppInstalled);
+
+    // Debug: verificar después de 3 segundos
+    setTimeout(() => {
+      if (!deferredPrompt && !showButton) {
+        console.log('⚠️ No se recibió beforeinstallprompt después de 3 segundos');
+        console.log('Posibles razones:');
+        console.log('- La app ya está instalada');
+        console.log('- El navegador no soporta PWA');
+        console.log('- Los criterios de instalación no se cumplen');
+        console.log('- Manifest o Service Worker tienen problemas');
+      }
+    }, 3000);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -49,19 +81,25 @@ export default function InstallButton() {
   }, []);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
+    console.log('🖱️ Botón clickeado');
+    if (!deferredPrompt) {
+      console.log('❌ No hay prompt disponible');
+      return;
+    }
 
+    console.log('📱 Mostrando prompt...');
     // Mostrar el prompt nativo
     deferredPrompt.prompt();
 
     // Esperar la respuesta del usuario
     const { outcome } = await deferredPrompt.userChoice;
+    console.log('👤 Usuario decidió:', outcome);
 
     if (outcome === 'accepted') {
-      console.log('Usuario aceptó instalar la PWA');
+      console.log('✅ Usuario aceptó instalar la PWA');
       localStorage.setItem('pwa-installed', 'true');
     } else {
-      console.log('Usuario rechazó instalar la PWA');
+      console.log('❌ Usuario rechazó instalar la PWA');
     }
 
     // Limpiar el prompt
@@ -70,9 +108,15 @@ export default function InstallButton() {
   };
 
   const handleDismiss = () => {
+    console.log('🚫 Botón descartado');
     setShowButton(false);
     localStorage.setItem('pwa-dismissed', 'true');
   };
+
+  // Mostrar info de debug en desarrollo
+  if (process.env.NODE_ENV === 'development') {
+    console.log('InstallButton state:', { isInstalled, showButton, hasPrompt: !!deferredPrompt, debugInfo });
+  }
 
   // No mostrar si está instalada o si no hay prompt disponible
   if (isInstalled || !showButton) {
