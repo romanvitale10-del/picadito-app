@@ -56,6 +56,9 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif']
+      },
+      animation: {
+        'bounce-slow': 'bounce 2s infinite'
       }
     },
   },
