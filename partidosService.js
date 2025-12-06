@@ -34,19 +34,19 @@ export const crearPartido = async (userId, datosPartido) => {
 // Obtener partidos cercanos (por ahora todos)
 export const obtenerPartidos = async () => {
   try {
-    const { getDocs, query, where } = await import('firebase/firestore');
+    const { getDocs } = await import('firebase/firestore');
     
     console.log('📥 Obteniendo partidos...');
-    const q = query(
-      collection(db, 'partidos'),
-      where('estado', '==', 'abierto')
-    );
-
-    const snapshot = await getDocs(q);
-    const partidos = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    
+    // Obtener todos los partidos y filtrar en el cliente
+    // (evita necesitar índices en Firestore)
+    const snapshot = await getDocs(collection(db, 'partidos'));
+    const partidos = snapshot.docs
+      .map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }))
+      .filter(p => p.estado === 'abierto'); // Filtrar en el cliente
     
     console.log('✅ Partidos obtenidos:', partidos.length);
     
