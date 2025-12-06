@@ -14,6 +14,7 @@ export default function CrearPartidoForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [paso, setPaso] = useState(1); // Wizard de 3 pasos
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
   const [formData, setFormData] = useState({
     // Paso 1: Básico
@@ -75,14 +76,25 @@ export default function CrearPartidoForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    e.stopPropagation();
     
-    // Solo procesar si estamos en el paso 3 y no está cargando
-    if (paso !== 3 || loading) {
+    // Solo procesar si estamos en el paso 3, no está cargando y el usuario realmente presionó el botón
+    if (paso !== 3 || loading || !submitAttempted) {
+      console.log('❌ Submit bloqueado:', { paso, loading, submitAttempted });
       return;
     }
 
+    console.log('✅ Iniciando creación de partido...');
     setError('');
     setLoading(true);
+
+    // Timeout de seguridad (30 segundos)
+    const timeoutId = setTimeout(() => {
+      console.error('⏱️ Timeout: La creación del partido tardó demasiado');
+      setError('La operación está tardando mucho. Verifica tu conexión a internet y las reglas de Firebase.');
+      setLoading(false);
+      setSubmitAttempted(false);
+    }, 30000);
 
     try {
       const formatoSeleccionado = formatosDisponibles.find(f => f.id === formData.formato);
@@ -95,12 +107,26 @@ export default function CrearPartidoForm() {
         anfitrionEmail: user.email
       };
 
+      console.log('📤 Enviando datos:', partidoData);
       await crearPartido(user.uid, partidoData);
+      clearTimeout(timeoutId);
+      console.log('✅ Partido creado exitosamente');
       navigate('/app/partidos');
     } catch (err) {
-      setError('Error al crear el partido. Inténtalo de nuevo.');
-      console.error(err);
+      clearTimeout(timeoutId);
+      console.error('❌ Error al crear partido:', err);
+      
+      // Mensaje de error más específico
+      if (err.code === 'permission-denied') {
+        setError('Error de permisos. Verifica las reglas de Firestore.');
+      } else if (err.message?.includes('fetch')) {
+        setError('Error de conexión. Verifica tu internet.');
+      } else {
+        setError('Error al crear el partido: ' + (err.message || 'Inténtalo de nuevo.'));
+      }
+      
       setLoading(false);
+      setSubmitAttempted(false);
     }
   };
 
@@ -126,10 +152,13 @@ export default function CrearPartidoForm() {
     }
     
     setError('');
+    setSubmitAttempted(false); // Resetear flag al cambiar de paso
     if (paso < 3) setPaso(paso + 1);
   };
 
   const pasoAnterior = () => {
+    setError('');
+    setSubmitAttempted(false); // Resetear flag al retroceder
     if (paso > 1) setPaso(paso - 1);
   };
 
@@ -660,6 +689,10 @@ export default function CrearPartidoForm() {
             ) : (
               <button
                 type="submit"
+                onClick={() => {
+                  console.log('🖱️ Botón Crear Partido presionado');
+                  setSubmitAttempted(true);
+                }}
                 disabled={loading}
                 className="btn-primary flex-1"
               >
