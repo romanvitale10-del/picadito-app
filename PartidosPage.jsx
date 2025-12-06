@@ -40,9 +40,15 @@ export default function PartidosPage() {
       console.log('🔄 Cargando partidos...');
       const data = await obtenerPartidos();
       console.log('✅ Partidos cargados:', data.length);
+      console.log('📋 Datos de partidos:', data);
       setPartidos(data);
     } catch (error) {
       console.error('❌ Error al cargar partidos:', error);
+      console.error('Detalles del error:', {
+        message: error.message,
+        code: error.code,
+        stack: error.stack
+      });
     } finally {
       setLoading(false);
     }
