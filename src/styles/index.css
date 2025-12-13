@@ -1,0 +1,131 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-primary: #10b981;
+    --color-secondary: #059669;
+    --color-accent: #34d399;
+  }
+
+  body {
+    @apply bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-200;
+  }
+
+  /* Fondo sutil con textura de pasto */
+  .bg-grass-pattern {
+    @apply bg-grass-light dark:bg-grass-dark;
+  }
+}
+
+@layer components {
+  /* Botón primario */
+  .btn-primary {
+    @apply bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed;
+    background-color: var(--color-primary);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    filter: brightness(0.9);
+  }
+
+  /* Botón secundario */
+  .btn-secondary {
+    @apply bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 font-medium py-2 px-4 rounded-lg transition-all duration-200;
+  }
+
+  /* Botón de contorno */
+  .btn-outline {
+    @apply border-2 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200;
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+
+  .btn-outline:hover {
+    background-color: var(--color-primary);
+    color: white;
+  }
+
+  /* Card básico */
+  .card {
+    @apply bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-200 p-4;
+  }
+
+  /* Input de formulario */
+  .input-field {
+    @apply w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 outline-none transition-all duration-200;
+  }
+
+  .input-field:focus {
+    @apply ring-2 border-transparent;
+    ring-color: var(--color-primary);
+  }
+
+  /* Badge de estado */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  /* Contenedor principal */
+  .container-app {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Espaciador para ads */
+  .ad-slot {
+    @apply min-h-[100px] bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center text-gray-400 dark:text-gray-600 text-sm border-2 border-dashed border-gray-300 dark:border-gray-700;
+  }
+}
+
+@layer utilities {
+  /* Animación de entrada suave */
+  .fade-in {
+    animation: fadeIn 0.3s ease-in;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Scroll suave */
+  .scroll-smooth {
+    scroll-behavior: smooth;
+  }
+
+  /* Ocultar scrollbar pero mantener funcionalidad */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Estilos para Leaflet en modo oscuro */
+.dark .leaflet-container {
+  @apply bg-gray-800;
+}
+
+.dark .leaflet-popup-content-wrapper {
+  @apply bg-gray-800 text-gray-100;
+}
+
+.dark .leaflet-popup-tip {
+  @apply bg-gray-800;
+}
+
+/* Animación de carga */
+.spinner {
+  @apply inline-block w-8 h-8 border-4 border-gray-200 rounded-full animate-spin;
+  border-top-color: var(--color-primary);
+}
