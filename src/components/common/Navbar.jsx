@@ -39,9 +39,9 @@ export default function Navbar() {
             {/* Navigation Desktop */}
             <nav className="hidden md:flex items-center gap-6">
               <Link
-                to="/"
+                to="/app"
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                  isActive('/')
+                  isActive('/app')
                     ? 'bg-primary text-white'
                     : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
@@ -51,9 +51,9 @@ export default function Navbar() {
               </Link>
 
               <Link
-                to="/partidos"
+                to="/app/partidos"
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                  isActive('/partidos')
+                  isActive('/app/partidos')
                     ? 'bg-primary text-white'
                     : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
@@ -63,9 +63,9 @@ export default function Navbar() {
               </Link>
 
               <Link
-                to="/mapa"
+                to="/app/mapa"
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                  isActive('/mapa')
+                  isActive('/app/mapa')
                     ? 'bg-primary text-white'
                     : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
@@ -75,9 +75,9 @@ export default function Navbar() {
               </Link>
 
               <Link
-                to="/sala-de-espera"
+                to="/app/sala-de-espera"
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                  isActive('/sala-de-espera')
+                  isActive('/app/sala-de-espera')
                     ? 'bg-primary text-white'
                     : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
@@ -87,9 +87,9 @@ export default function Navbar() {
               </Link>
 
               <Link
-                to="/perfil"
+                to="/app/perfil"
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                  isActive('/perfil')
+                  isActive('/app/perfil')
                     ? 'bg-primary text-white'
                     : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
@@ -173,9 +173,9 @@ export default function Navbar() {
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 safe-area-bottom">
         <div className="grid grid-cols-5 h-16">
           <Link
-            to="/"
+            to="/app"
             className={`flex flex-col items-center justify-center gap-1 ${
-              isActive('/')
+              isActive('/app')
                 ? 'text-primary'
                 : 'text-gray-600 dark:text-gray-400'
             }`}
@@ -185,9 +185,9 @@ export default function Navbar() {
           </Link>
 
           <Link
-            to="/partidos"
+            to="/app/partidos"
             className={`flex flex-col items-center justify-center gap-1 ${
-              isActive('/partidos')
+              isActive('/app/partidos')
                 ? 'text-primary'
                 : 'text-gray-600 dark:text-gray-400'
             }`}
@@ -197,9 +197,9 @@ export default function Navbar() {
           </Link>
 
           <Link
-            to="/mapa"
+            to="/app/mapa"
             className={`flex flex-col items-center justify-center gap-1 ${
-              isActive('/mapa')
+              isActive('/app/mapa')
                 ? 'text-primary'
                 : 'text-gray-600 dark:text-gray-400'
             }`}
@@ -209,9 +209,9 @@ export default function Navbar() {
           </Link>
 
           <Link
-            to="/sala-de-espera"
+            to="/app/sala-de-espera"
             className={`flex flex-col items-center justify-center gap-1 ${
-              isActive('/sala-de-espera')
+              isActive('/app/sala-de-espera')
                 ? 'text-primary'
                 : 'text-gray-600 dark:text-gray-400'
             }`}
@@ -221,9 +221,9 @@ export default function Navbar() {
           </Link>
 
           <Link
-            to="/perfil"
+            to="/app/perfil"
             className={`flex flex-col items-center justify-center gap-1 ${
-              isActive('/perfil')
+              isActive('/app/perfil')
                 ? 'text-primary'
                 : 'text-gray-600 dark:text-gray-400'
             }`}

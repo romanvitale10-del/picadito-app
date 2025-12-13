@@ -19,6 +19,7 @@ export default function SnakeFutbolero() {
   const directionRef = useRef(direction);
   const gameLoopRef = useRef(null);
   const lastMoveTimeRef = useRef(0);
+  const movementQueueRef = useRef([]);
 
   // Generar comida aleatoria
   const generateFood = useCallback(() => {
@@ -45,6 +46,11 @@ export default function SnakeFutbolero() {
 
     lastMoveTimeRef.current = Date.now();
 
+    // Procesar el siguiente movimiento de la cola si hay alguno
+    if (movementQueueRef.current.length > 0) {
+      directionRef.current = movementQueueRef.current.shift();
+    }
+
     setSnake(prevSnake => {
       const newHead = {
         x: prevSnake[0].x + directionRef.current.x,
@@ -58,18 +64,23 @@ export default function SnakeFutbolero() {
         return prevSnake;
       }
 
-      // Verificar colisión con el cuerpo (excluir la cola que se va a eliminar)
-      const bodyToCheck = prevSnake.slice(0, -1);
-      if (bodyToCheck.some(segment => segment.x === newHead.x && segment.y === newHead.y)) {
-        setGameOver(true);
-        setIsPlaying(false);
-        return prevSnake;
+      // Verificar colisión con el cuerpo
+      // Solo verificar contra el cuerpo, sin incluir la cabeza ni la cola (que se eliminará)
+      const willEat = newHead.x === food.x && newHead.y === food.y;
+      
+      // Verificar contra todo el cuerpo actual excepto la cola (si no va a comer)
+      for (let i = 0; i < prevSnake.length - (willEat ? 0 : 1); i++) {
+        if (prevSnake[i].x === newHead.x && prevSnake[i].y === newHead.y) {
+          setGameOver(true);
+          setIsPlaying(false);
+          return prevSnake;
+        }
       }
 
       const newSnake = [newHead, ...prevSnake];
 
       // Verificar si comió
-      if (newHead.x === food.x && newHead.y === food.y) {
+      if (willEat) {
         setScore(prev => prev + 10);
         generateFood();
       } else {
@@ -103,20 +114,24 @@ export default function SnakeFutbolero() {
       }
 
       let newDirection = null;
+      const currentDir = movementQueueRef.current.length > 0 
+        ? movementQueueRef.current[movementQueueRef.current.length - 1]
+        : directionRef.current;
 
-      if (key === 'ArrowUp' && directionRef.current.y === 0) {
+      // Evitar ir en dirección opuesta
+      if (key === 'ArrowUp' && currentDir.y === 0) {
         newDirection = { x: 0, y: -1 };
-      } else if (key === 'ArrowDown' && directionRef.current.y === 0) {
+      } else if (key === 'ArrowDown' && currentDir.y === 0) {
         newDirection = { x: 0, y: 1 };
-      } else if (key === 'ArrowLeft' && directionRef.current.x === 0) {
+      } else if (key === 'ArrowLeft' && currentDir.x === 0) {
         newDirection = { x: -1, y: 0 };
-      } else if (key === 'ArrowRight' && directionRef.current.x === 0) {
+      } else if (key === 'ArrowRight' && currentDir.x === 0) {
         newDirection = { x: 1, y: 0 };
       }
 
-      if (newDirection) {
-        directionRef.current = newDirection;
-        setDirection(newDirection);
+      // Solo agregar a la cola si es un movimiento válido y no hay muchos en cola
+      if (newDirection && movementQueueRef.current.length < 2) {
+        movementQueueRef.current.push(newDirection);
       }
     };
 
@@ -128,24 +143,32 @@ export default function SnakeFutbolero() {
   const handleDirectionChange = (newDir) => {
     if (!isPlaying || gameOver) return;
 
-    if (
-      (newDir.y !== 0 && directionRef.current.y === 0) ||
-      (newDir.x !== 0 && directionRef.current.x === 0)
-    ) {
-      directionRef.current = newDir;
-      setDirection(newDir);
+    const currentDir = movementQueueRef.current.length > 0 
+      ? movementQueueRef.current[movementQueueRef.current.length - 1]
+      : directionRef.current;
+
+    // Verificar que no sea la dirección opuesta
+    const isValid = 
+      (newDir.y !== 0 && currentDir.y === 0) ||
+      (newDir.x !== 0 && currentDir.x === 0);
+
+    if (isValid && movementQueueRef.current.length < 2) {
+      movementQueueRef.current.push(newDir);
     }
   };
 
   const startGame = () => {
+    console.log('🎮 Iniciando juego...');
     setSnake(INITIAL_SNAKE);
     setDirection(INITIAL_DIRECTION);
     directionRef.current = INITIAL_DIRECTION;
+    movementQueueRef.current = [];
     setGameOver(false);
     setScore(0);
     setIsPlaying(true);
     setIsPaused(false);
     generateFood();
+    console.log('✅ Juego iniciado');
   };
 
   const togglePause = () => {

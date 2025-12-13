@@ -91,7 +91,7 @@ export default function SoloQueuePage() {
         setColaId(null);
 
         // Ir al partido creado
-        navigate(`/partidos/${partido.id}`);
+        navigate(`/app/partidos/${partido.id}`);
       }
     } catch (error) {
       console.error('Error al buscar partida:', error);

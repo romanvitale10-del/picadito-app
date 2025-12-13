@@ -1,10 +1,19 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
+import { HashRouter } from 'react-router-dom'
 import App from './App.jsx'
 import { ThemeProvider } from './contexts/ThemeContext.jsx'
 import { AuthProvider } from './contexts/AuthContext.jsx'
 import './styles/index.css'
+
+// Capturar el evento de instalación ANTES de que Chrome lo capture
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  console.log('🎉 beforeinstallprompt capturado en main.jsx');
+  e.preventDefault();
+  deferredPrompt = e;
+  window.deferredPrompt = e; // Guardarlo globalmente
+});
 
 // Registrar Service Worker para PWA
 if ('serviceWorker' in navigator) {
@@ -17,12 +26,12 @@ if ('serviceWorker' in navigator) {
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <HashRouter>
       <ThemeProvider>
         <AuthProvider>
           <App />
         </AuthProvider>
       </ThemeProvider>
-    </BrowserRouter>
+    </HashRouter>
   </React.StrictMode>,
 )

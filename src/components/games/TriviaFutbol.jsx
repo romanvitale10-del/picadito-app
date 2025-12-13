@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Trophy, RotateCcw, CheckCircle, XCircle } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Trophy, RotateCcw, CheckCircle, XCircle, Clock } from 'lucide-react';
 
 const PREGUNTAS = [
   {
@@ -54,19 +54,90 @@ export default function TriviaFutbol() {
   const [mostrarResultado, setMostrarResultado] = useState(false);
   const [respuestaSeleccionada, setRespuestaSeleccionada] = useState(null);
   const [juegoTerminado, setJuegoTerminado] = useState(false);
+  const [tiempoTranscurrido, setTiempoTranscurrido] = useState(0);
+  const [yaJugoHoy, setYaJugoHoy] = useState(false);
+  const [tiempoRestante, setTiempoRestante] = useState('');
+  const timerRef = useRef(null);
+  const tiempoInicioPreguntaRef = useRef(Date.now());
 
   const pregunta = PREGUNTAS[preguntaActual];
-  const puntaje = respuestas.filter(r => r.correcta).length * 20;
+  const puntaje = respuestas.reduce((total, r) => total + r.puntos, 0);
+
+  // Verificar si ya jugó hoy
+  useEffect(() => {
+    const ultimoJuego = localStorage.getItem('triviaUltimoJuego');
+    const hoy = new Date().toDateString();
+    
+    if (ultimoJuego === hoy) {
+      setYaJugoHoy(true);
+      calcularTiempoRestante();
+    }
+  }, []);
+
+  // Calcular tiempo restante hasta mañana
+  const calcularTiempoRestante = () => {
+    const ahora = new Date();
+    const manana = new Date(ahora);
+    manana.setDate(manana.getDate() + 1);
+    manana.setHours(0, 0, 0, 0);
+    
+    const diff = manana - ahora;
+    const horas = Math.floor(diff / (1000 * 60 * 60));
+    const minutos = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    setTiempoRestante(`${horas}h ${minutos}m`);
+  };
+
+  // Timer para la pregunta actual
+  useEffect(() => {
+    if (!juegoTerminado && respuestaSeleccionada === null) {
+      tiempoInicioPreguntaRef.current = Date.now();
+      setTiempoTranscurrido(0);
+      
+      timerRef.current = setInterval(() => {
+        setTiempoTranscurrido(Math.floor((Date.now() - tiempoInicioPreguntaRef.current) / 1000));
+      }, 100);
+    }
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [preguntaActual, juegoTerminado, respuestaSeleccionada]);
+
+  // Calcular puntos según el tiempo (máximo 100 puntos, mínimo 10)
+  const calcularPuntos = (tiempoEnSegundos) => {
+    const TIEMPO_MAXIMO = 30; // 30 segundos para responder
+    const PUNTOS_MAXIMOS = 100;
+    const PUNTOS_MINIMOS = 10;
+    
+    // Si responde en menos de 3 segundos: 100 puntos
+    if (tiempoEnSegundos <= 3) return PUNTOS_MAXIMOS;
+    
+    // Reducir puntos proporcionalmente hasta el tiempo máximo
+    const puntos = PUNTOS_MAXIMOS - ((tiempoEnSegundos - 3) / (TIEMPO_MAXIMO - 3)) * (PUNTOS_MAXIMOS - PUNTOS_MINIMOS);
+    
+    return Math.max(PUNTOS_MINIMOS, Math.floor(puntos));
+  };
 
   const handleRespuesta = (indice) => {
     if (respuestaSeleccionada !== null) return;
 
     const correcta = indice === pregunta.respuestaCorrecta;
+    const tiempoRespuesta = Math.floor((Date.now() - tiempoInicioPreguntaRef.current) / 1000);
+    const puntos = correcta ? calcularPuntos(tiempoRespuesta) : 0;
+    
     setRespuestaSeleccionada(indice);
     setMostrarResultado(true);
 
+    // Detener el timer
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+
     setTimeout(() => {
-      setRespuestas([...respuestas, { correcta }]);
+      setRespuestas([...respuestas, { correcta, puntos, tiempo: tiempoRespuesta }]);
       
       if (preguntaActual < PREGUNTAS.length - 1) {
         setPreguntaActual(preguntaActual + 1);
@@ -74,6 +145,10 @@ export default function TriviaFutbol() {
         setMostrarResultado(false);
       } else {
         setJuegoTerminado(true);
+        // Marcar que ya jugó hoy
+        const hoy = new Date().toDateString();
+        localStorage.setItem('triviaUltimoJuego', hoy);
+        setYaJugoHoy(true);
       }
     }, 1500);
   };
@@ -84,6 +159,10 @@ export default function TriviaFutbol() {
     setMostrarResultado(false);
     setRespuestaSeleccionada(null);
     setJuegoTerminado(false);
+    setTiempoTranscurrido(0);
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
   };
 
   const getButtonColor = (indice) => {
@@ -107,7 +186,26 @@ export default function TriviaFutbol() {
       {/* Panel de Trivia */}
       <div className="lg:col-span-2">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6">
-          {!juegoTerminado ? (
+          {yaJugoHoy && !juegoTerminado ? (
+            // Mensaje de que ya jugó hoy
+            <div className="text-center py-16">
+              <div className="w-24 h-24 mx-auto mb-6 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                <Clock className="w-12 h-12 text-blue-600 dark:text-blue-400" />
+              </div>
+              <h3 className="text-2xl font-bold mb-3 text-gray-800 dark:text-white">
+                ¡Ya jugaste hoy! 🎮
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-2">
+                Podés volver a jugar en:
+              </p>
+              <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-4">
+                {tiempoRestante}
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-500">
+                La trivia se renueva cada día a las 00:00
+              </p>
+            </div>
+          ) : !juegoTerminado ? (
             <>
               {/* Header */}
               <div className="flex justify-between items-center mb-6">
@@ -123,6 +221,17 @@ export default function TriviaFutbol() {
                   <p className="text-sm text-gray-600 dark:text-gray-400">Puntaje</p>
                   <p className="text-3xl font-bold text-green-600">{puntaje}</p>
                 </div>
+              </div>
+
+              {/* Timer */}
+              <div className="flex items-center justify-center gap-2 mb-4 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                  {tiempoTranscurrido}s
+                </span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  • Más rápido = Más puntos
+                </span>
               </div>
 
               {/* Barra de progreso */}
@@ -169,8 +278,8 @@ export default function TriviaFutbol() {
                 }`}>
                   <p className="font-semibold">
                     {respuestaSeleccionada === pregunta.respuestaCorrecta
-                      ? '¡Correcto! 🎉'
-                      : '¡Incorrecto! 😔'}
+                      ? `¡Correcto! 🎉 +${respuestas[respuestas.length - 1]?.puntos || 0} puntos`
+                      : '¡Incorrecto! ❌ +0 puntos'}
                   </p>
                 </div>
               )}
@@ -183,11 +292,14 @@ export default function TriviaFutbol() {
                 ¡Juego Terminado!
               </h3>
               <p className="text-xl mb-6 text-gray-600 dark:text-gray-400">
-                Puntaje Final: <span className="font-bold text-green-600">{puntaje}</span> / 100
+                Puntaje Final: <span className="font-bold text-green-600">{puntaje}</span> / 500
               </p>
               
               <div className="mb-6">
                 <p className="text-lg mb-2">Respuestas correctas: {respuestas.filter(r => r.correcta).length} / {PREGUNTAS.length}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Tiempo promedio: {(respuestas.reduce((sum, r) => sum + r.tiempo, 0) / respuestas.length).toFixed(1)}s por pregunta
+                </p>
                 <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4">
                   <div 
                     className="bg-green-500 h-4 rounded-full transition-all duration-500"
@@ -198,10 +310,12 @@ export default function TriviaFutbol() {
 
               <button
                 onClick={reiniciarJuego}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold flex items-center gap-2 mx-auto transition-colors"
+                disabled={yaJugoHoy}
+                className={`${yaJugoHoy ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} text-white px-8 py-3 rounded-lg font-semibold flex items-center gap-2 mx-auto transition-colors`}
+                title={yaJugoHoy ? `Podrás jugar de nuevo en ${tiempoRestante}` : ''}
               >
                 <RotateCcw className="w-5 h-5" />
-                Jugar de Nuevo
+                Jugar de Nuevo{yaJugoHoy ? ' (Mañana)' : ''}
               </button>
             </div>
           )}

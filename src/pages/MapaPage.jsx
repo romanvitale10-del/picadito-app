@@ -97,7 +97,7 @@ export default function MapaPage() {
   };
 
   const handlePartidoClick = (partido) => {
-    navigate(`/partidos/${partido.id}`);
+    navigate(`/app/partidos/${partido.id}`);
   };
 
   const formatosDisponibles = [...new Set(partidos.map(p => p.nombreFormato))];

@@ -20,7 +20,7 @@ export default function LoginForm({ onToggleMode }) {
     try {
       await signIn(email, password);
       console.log('✅ Login exitoso, redirigiendo...');
-      navigate('/');
+      navigate('/app');
     } catch (err) {
       setError('Email o contraseña incorrectos');
       console.error('❌ Error en login:', err);
@@ -37,7 +37,7 @@ export default function LoginForm({ onToggleMode }) {
       console.log('🔄 Iniciando login con Google...');
       await signInWithGoogle();
       console.log('✅ Login con Google exitoso, redirigiendo...');
-      navigate('/');
+      navigate('/app');
     } catch (err) {
       setError('Error al iniciar sesión con Google');
       console.error('❌ Error en Google login:', err);

@@ -107,7 +107,7 @@ export default function HomePage() {
           </div>
 
           <div className="card md:col-span-1 col-span-2">
-            <Link to="/partidos/crear" className="flex items-center justify-center gap-2 h-full btn-primary">
+            <Link to="/app/partidos/crear" className="flex items-center justify-center gap-2 h-full btn-primary">
               <Plus className="w-5 h-5" />
               <span>Crear Partido</span>
             </Link>
@@ -118,7 +118,7 @@ export default function HomePage() {
         <AdSlot size="medium" className="mb-8" />
 
         {/* Solo Queue CTA */}
-        <Link to="/solo-queue" className="block mb-8">
+        <Link to="/app/solo-queue" className="block mb-8">
           <div className="card bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 transition-all cursor-pointer border-0">
             <div className="flex items-center justify-between text-white">
               <div className="flex items-center gap-4">
@@ -148,7 +148,7 @@ export default function HomePage() {
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                 Partidos Cerca Tuyo
               </h2>
-              <Link to="/partidos" className="text-primary hover:underline text-sm font-medium">
+              <Link to="/app/partidos" className="text-primary hover:underline text-sm font-medium">
                 Ver todos
               </Link>
             </div>
@@ -262,7 +262,7 @@ export default function HomePage() {
                   <Users className="w-4 h-4 inline mr-2" />
                   Agentes Libres
                 </Link>
-                <Link to="/mapa" className="block w-full btn-secondary text-left">
+                <Link to="/app/mapa" className="block w-full btn-secondary text-left">
                   <MapPin className="w-4 h-4 inline mr-2" />
                   Ver en Mapa
                 </Link>

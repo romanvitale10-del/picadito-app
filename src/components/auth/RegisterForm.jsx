@@ -43,7 +43,7 @@ export default function RegisterForm({ onToggleMode }) {
     try {
       await signUp(formData.email, formData.password, formData.name);
       console.log('✅ Registro exitoso, redirigiendo...');
-      navigate('/');
+      navigate('/app');
     } catch (err) {
       if (err.code === 'auth/email-already-in-use') {
         setError('Este email ya está registrado');
@@ -64,7 +64,7 @@ export default function RegisterForm({ onToggleMode }) {
       console.log('🔄 Iniciando registro con Google...');
       await signInWithGoogle();
       console.log('✅ Registro con Google exitoso, redirigiendo...');
-      navigate('/');
+      navigate('/app');
     } catch (err) {
       setError('Error al registrarse con Google');
       console.error('❌ Error en Google signup:', err);

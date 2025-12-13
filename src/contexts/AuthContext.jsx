@@ -168,9 +168,17 @@ export const AuthProvider = ({ children }) => {
 
     try {
       console.log('📝 Actualizando perfil con:', updates);
+      
+      // Si se está actualizando la foto y no es base64, también actualizar Firebase Auth
+      if (updates.photoURL && !updates.photoURL.startsWith('data:')) {
+        const { updateProfile } = await import('firebase/auth');
+        await updateProfile(user, { photoURL: updates.photoURL });
+        console.log('✅ Foto actualizada en Firebase Auth');
+      }
+      
       const docRef = doc(db, 'usuarios', user.uid);
       await setDoc(docRef, updates, { merge: true });
-      console.log('✅ Perfil actualizado exitosamente');
+      console.log('✅ Perfil actualizado exitosamente en Firestore');
       
       // Recargar perfil
       await loadUserProfile(user.uid);

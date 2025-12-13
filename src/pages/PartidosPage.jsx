@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import Navbar from '../components/common/Navbar';
 import AdSlot from '../components/ads/AdSlot';
 import { obtenerPartidos } from '../services/partidosService';
@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export default function PartidosPage() {
+  const location = useLocation();
   const [partidos, setPartidos] = useState([]);
   const [partidosFiltrados, setPartidosFiltrados] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -24,9 +25,10 @@ export default function PartidosPage() {
     soloDisponibles: true
   });
 
+  // Recargar partidos cuando se navega a esta página
   useEffect(() => {
     cargarPartidos();
-  }, []);
+  }, [location]);
 
   useEffect(() => {
     aplicarFiltros();
@@ -34,10 +36,19 @@ export default function PartidosPage() {
 
   const cargarPartidos = async () => {
     try {
+      setLoading(true);
+      console.log('🔄 Cargando partidos...');
       const data = await obtenerPartidos();
+      console.log('✅ Partidos cargados:', data.length);
+      console.log('📋 Datos de partidos:', data);
       setPartidos(data);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('❌ Error al cargar partidos:', error);
+      console.error('Detalles del error:', {
+        message: error.message,
+        code: error.code,
+        stack: error.stack
+      });
     } finally {
       setLoading(false);
     }
@@ -128,7 +139,7 @@ export default function PartidosPage() {
             </p>
           </div>
 
-          <Link to="/partidos/crear" className="btn-primary flex items-center gap-2 justify-center">
+          <Link to="/app/partidos/crear" className="btn-primary flex items-center gap-2 justify-center">
             <Plus className="w-5 h-5" />
             Crear Partido
           </Link>
@@ -250,7 +261,7 @@ export default function PartidosPage() {
                 : 'Sé el primero en crear un partido'
               }
             </p>
-            <Link to="/partidos/crear" className="btn-primary inline-flex items-center gap-2">
+            <Link to="/app/partidos/crear" className="btn-primary inline-flex items-center gap-2">
               <Plus className="w-5 h-5" />
               Crear Partido
             </Link>
@@ -258,7 +269,7 @@ export default function PartidosPage() {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {partidosFiltrados.map((partido, index) => (
-              <div key={partido.id} className="card hover:shadow-2xl transition-all cursor-pointer">
+              <div key={partido.id} className="card hover:shadow-2xl transition-all flex flex-col">
                 {/* Header */}
                 <div className="flex items-start justify-between mb-3">
                   <div>
@@ -305,7 +316,7 @@ export default function PartidosPage() {
                 </div>
 
                 {/* Progreso de Jugadores */}
-                <div className="mb-4">
+                <div className="mb-4 flex-grow">
                   <div className="flex items-center justify-between text-sm mb-1">
                     <span className="text-gray-600 dark:text-gray-400">
                       <Users className="w-4 h-4 inline mr-1" />
@@ -326,7 +337,7 @@ export default function PartidosPage() {
                 </div>
 
                 {/* Footer */}
-                <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between pt-3 mb-4 border-t border-gray-200 dark:border-gray-700">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center text-white font-bold text-sm">
                       {partido.anfitrionNombre?.charAt(0) || 'A'}
@@ -351,8 +362,8 @@ export default function PartidosPage() {
 
                 {/* Botón Ver Detalles */}
                 <Link 
-                  to={`/partidos/${partido.id}`}
-                  className="btn-primary w-full mt-4 text-center"
+                  to={`/app/partidos/${partido.id}`}
+                  className="btn-primary w-full text-center block"
                 >
                   Ver Detalles
                 </Link>

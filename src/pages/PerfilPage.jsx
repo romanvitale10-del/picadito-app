@@ -1,13 +1,15 @@
 import Navbar from '../components/common/Navbar';
 import { useAuth } from '../contexts/AuthContext';
-import { Star, Trophy, TrendingUp, MapPin, User, Mail, Calendar, Award } from 'lucide-react';
-import { useState } from 'react';
+import { Star, Trophy, TrendingUp, MapPin, User, Mail, Calendar, Award, Camera } from 'lucide-react';
+import { useState, useRef } from 'react';
 
 export default function PerfilPage() {
   const { user, userProfile, updateUserProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState({ type: '', text: '' });
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
     edad: userProfile?.edad || '',
     posicion: userProfile?.posicion || '',
@@ -46,6 +48,71 @@ export default function PerfilPage() {
     }
   };
 
+  const handlePhotoClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validar tipo de archivo
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor seleccioná una imagen');
+      return;
+    }
+
+    // Validar tamaño (máximo 500KB para base64)
+    if (file.size > 500 * 1024) {
+      alert('La imagen no puede pesar más de 500KB. Por favor comprimila o elegí otra más pequeña.');
+      return;
+    }
+
+    setUploadingPhoto(true);
+    setSaveMessage({ type: '', text: '' });
+
+    try {
+      // Convertir imagen a base64
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        try {
+          const photoURL = reader.result;
+
+          // Actualizar perfil con la imagen en base64
+          await updateUserProfile({ photoURL });
+          
+          setSaveMessage({ type: 'success', text: '✅ Foto actualizada exitosamente!' });
+          setTimeout(() => setSaveMessage({ type: '', text: '' }), 3000);
+        } catch (error) {
+          console.error('❌ Error al actualizar foto:', error);
+          setSaveMessage({ 
+            type: 'error', 
+            text: '❌ Error al actualizar la foto. Intentá de nuevo.' 
+          });
+        } finally {
+          setUploadingPhoto(false);
+        }
+      };
+
+      reader.onerror = () => {
+        setSaveMessage({ 
+          type: 'error', 
+          text: '❌ Error al leer la imagen.' 
+        });
+        setUploadingPhoto(false);
+      };
+
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('❌ Error:', error);
+      setSaveMessage({ 
+        type: 'error', 
+        text: '❌ Error al procesar la imagen.' 
+      });
+      setUploadingPhoto(false);
+    }
+  };
+
   const confianza = userProfile?.confianza || 100;
   const estrellas = userProfile?.estrellas || 0;
   const partidosJugados = userProfile?.partidosJugados || 0;
@@ -60,10 +127,17 @@ export default function PerfilPage() {
           <div className="card mb-6">
             <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
               {/* Avatar */}
-              <div className="relative">
-                {user?.photoURL ? (
+              <div className="relative group cursor-pointer" onClick={handlePhotoClick}>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoChange}
+                  className="hidden"
+                />
+                {user?.photoURL || userProfile?.photoURL ? (
                   <img
-                    src={user.photoURL}
+                    src={userProfile?.photoURL || user.photoURL}
                     alt={userProfile?.displayName}
                     className="w-24 h-24 rounded-full object-cover border-4 border-primary"
                   />
@@ -72,6 +146,16 @@ export default function PerfilPage() {
                     {userProfile?.displayName?.charAt(0) || 'U'}
                   </div>
                 )}
+                
+                {/* Overlay para cambiar foto */}
+                <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  {uploadingPhoto ? (
+                    <div className="spinner w-6 h-6 border-white" />
+                  ) : (
+                    <Camera className="w-6 h-6 text-white" />
+                  )}
+                </div>
+                
                 <div className="absolute -bottom-2 -right-2 bg-white dark:bg-gray-800 rounded-full p-2 shadow-lg">
                   <Trophy className="w-5 h-5 text-yellow-500" />
                 </div>

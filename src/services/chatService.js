@@ -1,4 +1,4 @@
-import { ref, push, onValue, off, serverTimestamp, query, orderByChild, limitToLast } from 'firebase/database';
+import { ref, push, onValue, off, set } from 'firebase/database';
 import { realtimeDb } from './firebase';
 
 /**
@@ -6,28 +6,27 @@ import { realtimeDb } from './firebase';
  */
 export const enviarMensaje = async (partidoId, usuarioId, usuarioNombre, mensaje, usuarioFoto = null) => {
   try {
+    console.log('📤 Enviando mensaje al chat:', { partidoId, usuarioId });
     const chatRef = ref(realtimeDb, `chats/${partidoId}/mensajes`);
     
-    await push(chatRef, {
+    const nuevoMensaje = {
       usuarioId,
       usuarioNombre,
-      usuarioFoto,
       mensaje: mensaje.trim(),
-      timestamp: serverTimestamp(),
+      timestamp: Date.now(),
       leido: false
-    });
-
-    // Actualizar última actividad del chat
-    const metadataRef = ref(realtimeDb, `chats/${partidoId}/metadata`);
-    await push(metadataRef, {
-      ultimoMensaje: mensaje.trim().substring(0, 100),
-      ultimoUsuario: usuarioNombre,
-      ultimaActividad: serverTimestamp()
-    });
+    };
+    
+    if (usuarioFoto) {
+      nuevoMensaje.usuarioFoto = usuarioFoto;
+    }
+    
+    await push(chatRef, nuevoMensaje);
+    console.log('✅ Mensaje enviado exitosamente');
 
     return true;
   } catch (error) {
-    console.error('Error al enviar mensaje:', error);
+    console.error('❌ Error al enviar mensaje:', error);
     throw error;
   }
 };
@@ -35,42 +34,63 @@ export const enviarMensaje = async (partidoId, usuarioId, usuarioNombre, mensaje
 /**
  * Escuchar mensajes en tiempo real
  */
-export const escucharMensajes = (partidoId, callback, limite = 50) => {
+export const escucharMensajes = (partidoId, callback) => {
+  console.log('👂 Escuchando mensajes del partido:', partidoId);
   const chatRef = ref(realtimeDb, `chats/${partidoId}/mensajes`);
-  const mensajesQuery = query(chatRef, orderByChild('timestamp'), limitToLast(limite));
 
-  onValue(mensajesQuery, (snapshot) => {
+  const unsubscribe = onValue(chatRef, (snapshot) => {
+    console.log('📨 Mensajes recibidos:', snapshot.exists());
     const mensajes = [];
-    snapshot.forEach((childSnapshot) => {
-      mensajes.push({
-        id: childSnapshot.key,
-        ...childSnapshot.val()
+    
+    if (snapshot.exists()) {
+      snapshot.forEach((childSnapshot) => {
+        mensajes.push({
+          id: childSnapshot.key,
+          ...childSnapshot.val()
+        });
       });
-    });
+      
+      // Ordenar por timestamp en el cliente
+      mensajes.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+    }
+    
+    console.log('💬 Total de mensajes:', mensajes.length);
     callback(mensajes);
+  }, (error) => {
+    console.error('❌ Error al escuchar mensajes:', error);
+    callback([]);
   });
 
   // Retornar función para desuscribirse
-  return () => off(mensajesQuery);
+  return () => {
+    console.log('🔇 Deteniendo escucha de mensajes');
+    off(chatRef);
+  };
 };
 
 /**
  * Obtener mensajes una sola vez (sin escuchar)
  */
-export const obtenerMensajes = async (partidoId, limite = 50) => {
+export const obtenerMensajes = async (partidoId) => {
   try {
     const chatRef = ref(realtimeDb, `chats/${partidoId}/mensajes`);
-    const mensajesQuery = query(chatRef, orderByChild('timestamp'), limitToLast(limite));
 
     return new Promise((resolve) => {
-      onValue(mensajesQuery, (snapshot) => {
+      onValue(chatRef, (snapshot) => {
         const mensajes = [];
-        snapshot.forEach((childSnapshot) => {
-          mensajes.push({
-            id: childSnapshot.key,
-            ...childSnapshot.val()
+        
+        if (snapshot.exists()) {
+          snapshot.forEach((childSnapshot) => {
+            mensajes.push({
+              id: childSnapshot.key,
+              ...childSnapshot.val()
+            });
           });
-        });
+          
+          // Ordenar por timestamp en el cliente
+          mensajes.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+        }
+        
         resolve(mensajes);
       }, { onlyOnce: true });
     });
@@ -89,11 +109,10 @@ export const marcarMensajesComoLeidos = async (partidoId, usuarioId) => {
     const mensajesNoLeidos = mensajes.filter(m => m.usuarioId !== usuarioId && !m.leido);
 
     // Actualizar estado de lectura
-    // (Implementación simplificada - en producción usar batch updates)
-    mensajesNoLeidos.forEach(mensaje => {
+    for (const mensaje of mensajesNoLeidos) {
       const mensajeRef = ref(realtimeDb, `chats/${partidoId}/mensajes/${mensaje.id}/leido`);
-      push(mensajeRef, true);
-    });
+      await set(mensajeRef, true);
+    }
 
     return true;
   } catch (error) {
@@ -120,21 +139,22 @@ export const obtenerMensajesNoLeidos = async (partidoId, usuarioId) => {
  */
 export const enviarMensajeSistema = async (partidoId, mensaje) => {
   try {
+    console.log('🤖 Enviando mensaje del sistema:', partidoId);
     const chatRef = ref(realtimeDb, `chats/${partidoId}/mensajes`);
     
     await push(chatRef, {
       usuarioId: 'sistema',
       usuarioNombre: 'Picadito App',
-      usuarioFoto: null,
       mensaje: mensaje.trim(),
-      timestamp: serverTimestamp(),
+      timestamp: Date.now(),
       leido: true,
       esSistema: true
     });
 
+    console.log('✅ Mensaje del sistema enviado');
     return true;
   } catch (error) {
-    console.error('Error al enviar mensaje del sistema:', error);
+    console.error('❌ Error al enviar mensaje del sistema:', error);
     return false;
   }
 };

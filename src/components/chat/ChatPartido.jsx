@@ -1,8 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Send, Users, Loader } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { enviarMensaje, escucharMensajes } from '../../services/chatService';
-import { useNotificationSound } from '../../hooks/useChatNotifications';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -15,37 +14,74 @@ export default function ChatPartido({ partidoId, jugadores = [] }) {
   const mensajesEndRef = useRef(null);
   const inputRef = useRef(null);
   const mensajesPreviosRef = useRef(0);
-  const { reproducirSonido } = useNotificationSound();
+  const primeraVezRef = useRef(true);
+
+  const reproducirSonido = useCallback(() => {
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      oscillator.frequency.value = 800;
+      oscillator.type = 'sine';
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.5);
+    } catch (error) {
+      console.log('No se pudo reproducir sonido');
+    }
+  }, []);
 
   useEffect(() => {
-    if (!partidoId) return;
+    if (!partidoId) {
+      console.log('⚠️ No hay partidoId');
+      setCargando(false);
+      return;
+    }
 
+    console.log('🔄 Iniciando suscripción al chat:', partidoId);
     setCargando(true);
     
     // Escuchar mensajes en tiempo real
     const unsubscribe = escucharMensajes(partidoId, (nuevosMensajes) => {
+      console.log('📬 Mensajes actualizados:', nuevosMensajes.length);
       setMensajes(nuevosMensajes);
       setCargando(false);
       
       // Reproducir sonido si hay nuevos mensajes de otros usuarios
       if (mensajesPreviosRef.current > 0 && nuevosMensajes.length > mensajesPreviosRef.current) {
         const ultimoMensaje = nuevosMensajes[nuevosMensajes.length - 1];
-        if (ultimoMensaje.usuarioId !== user.uid && !ultimoMensaje.esSistema) {
+        if (ultimoMensaje.usuarioId !== user?.uid && !ultimoMensaje.esSistema) {
           reproducirSonido();
         }
       }
       mensajesPreviosRef.current = nuevosMensajes.length;
       
-      // Auto-scroll al último mensaje
-      setTimeout(() => {
-        mensajesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
+      // Auto-scroll al último mensaje SOLO si hay mensajes nuevos (no al cargar por primera vez)
+      if (!primeraVezRef.current && nuevosMensajes.length > 0) {
+        setTimeout(() => {
+          mensajesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
+      
+      // Marcar que ya pasó la primera carga
+      if (primeraVezRef.current) {
+        primeraVezRef.current = false;
+      }
     });
 
     return () => {
-      if (unsubscribe) unsubscribe();
+      console.log('🛑 Limpiando suscripción del chat');
+      if (unsubscribe && typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
     };
-  }, [partidoId, user.uid, reproducirSonido]);
+  }, [partidoId, user?.uid, reproducirSonido]);
 
   const handleEnviarMensaje = async (e) => {
     e.preventDefault();
@@ -55,18 +91,20 @@ export default function ChatPartido({ partidoId, jugadores = [] }) {
     setEnviando(true);
     
     try {
+      console.log('📤 Enviando mensaje...');
       await enviarMensaje(
         partidoId,
-        user.uid,
-        currentUser?.nombre || user.displayName || 'Usuario',
+        user?.uid,
+        currentUser?.nombre || user?.displayName || 'Usuario',
         nuevoMensaje,
-        currentUser?.fotoURL || user.photoURL
+        currentUser?.fotoURL || user?.photoURL
       );
       
+      console.log('✅ Mensaje enviado');
       setNuevoMensaje('');
       inputRef.current?.focus();
     } catch (error) {
-      console.error('Error al enviar mensaje:', error);
+      console.error('❌ Error al enviar mensaje:', error);
       alert('No se pudo enviar el mensaje. Intentá de nuevo.');
     } finally {
       setEnviando(false);
@@ -120,16 +158,23 @@ export default function ChatPartido({ partidoId, jugadores = [] }) {
 
   if (cargando) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader className="w-8 h-8 animate-spin text-primary" />
+      <div className="card">
+        <div className="flex items-center gap-2 mb-4">
+          <Users className="w-5 h-5 text-primary" />
+          <h3 className="font-semibold">Chat del Partido</h3>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <Loader className="w-8 h-8 animate-spin text-primary" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Header del chat */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+    <div className="card">
+      <div className="flex flex-col h-full">
+        {/* Header del chat */}
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
         <div className="flex items-center gap-2">
           <Users className="w-5 h-5 text-primary" />
           <div>
@@ -154,7 +199,7 @@ export default function ChatPartido({ partidoId, jugadores = [] }) {
           </div>
         ) : (
           mensajes.map((mensaje) => {
-            const esMio = mensaje.usuarioId === user.uid;
+            const esMio = mensaje.usuarioId === user?.uid;
             const esSistema = mensaje.esSistema || mensaje.usuarioId === 'sistema';
 
             if (esSistema) {
@@ -243,6 +288,7 @@ export default function ChatPartido({ partidoId, jugadores = [] }) {
           {nuevoMensaje.length}/500 caracteres
         </p>
       </form>
+      </div>
     </div>
   );
 }

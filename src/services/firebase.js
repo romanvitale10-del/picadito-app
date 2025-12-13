@@ -16,6 +16,15 @@ const firebaseConfig = {
   databaseURL: `https://${import.meta.env.VITE_FIREBASE_PROJECT_ID}-default-rtdb.firebaseio.com`
 };
 
+// Verificar configuración en producción
+if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+  console.error('❌ Firebase no configurado correctamente. Verifica las variables de entorno en Vercel.');
+  console.log('Variables disponibles:', {
+    hasApiKey: !!import.meta.env.VITE_FIREBASE_API_KEY,
+    hasProjectId: !!import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  });
+}
+
 // Inicializar Firebase
 const app = initializeApp(firebaseConfig);
 
